@@ -13,14 +13,8 @@
 
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import {
-  Stack,
-  router,
-  SplashScreen,
-  useSegments,
-  useRootNavigationState,
-} from "expo-router";
-import { useEffect, useState } from "react";
+import { Stack, SplashScreen, useRootNavigationState } from "expo-router";
+import { useEffect } from "react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 
@@ -32,37 +26,19 @@ const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
 SplashScreen.preventAutoHideAsync();
 
 function InitialLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const segments = useSegments();
+  const { isLoaded } = useAuth();
   const navigationState = useRootNavigationState();
-  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded || !navigationState?.key) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-
-    // Only navigate if we haven't navigated yet
-    if (!hasNavigated) {
-      if (!isSignedIn && !inAuthGroup) {
-        // User is not signed in and trying to access protected route
-        router.replace("/(auth)/sign-in");
-        setHasNavigated(true);
-      } else if (isSignedIn && inAuthGroup) {
-        // User is signed in but on auth page
-        router.replace("/home");
-        setHasNavigated(true);
-      } else if (isSignedIn && segments.length === 0) {
-        // User is signed in but at root with no segments (initial load)
-        router.replace("/home");
-        setHasNavigated(true);
-      }
+    // Hide splash screen once Clerk is loaded and navigation is ready
+    if (isLoaded && navigationState?.key) {
+      SplashScreen.hideAsync();
     }
-  }, [isLoaded, isSignedIn, segments, navigationState, hasNavigated]);
+  }, [isLoaded, navigationState]);
 
-  // While Clerk is loading the session, show nothing or a splash screen
+  // While Clerk is loading the session, keep showing splash screen
   if (!isLoaded) {
-    return null; // Or return a loading indicator
+    return null;
   }
 
   // This Stack manages which *group* is visible

@@ -18,6 +18,17 @@ export default function Page() {
     // Clear any previous errors
     setError("");
 
+    // Validate inputs
+    if (!emailAddress.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password");
+      return;
+    }
+
     // Start the sign-in process using the email and password provided
     try {
       const signInAttempt = await signIn.create({
@@ -33,13 +44,13 @@ export default function Page() {
       } else {
         // If the status isn't complete, check why. User might need to
         // complete further steps.
-        console.error(JSON.stringify(signInAttempt, null, 2));
+        console.error("Sign-in incomplete, status:", signInAttempt.status);
         setError("Sign-in incomplete. Please try again.");
       }
     } catch (err: any) {
       // See https://clerk.com/docs/guides/development/custom-flows/error-handling
       // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Sign-in error:", err);
 
       // Extract user-friendly error message
       const clerkError = err?.errors?.[0];
@@ -49,6 +60,8 @@ export default function Page() {
             clerkError.message ||
             "An error occurred during sign-in.",
         );
+      } else if (err?.message) {
+        setError(err.message);
       } else {
         setError("An error occurred during sign-in. Please try again.");
       }
